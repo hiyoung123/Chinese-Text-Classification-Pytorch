@@ -2,17 +2,31 @@
 #-*- coding:utf-8 -*-
 
 import argparse
+import random
+
+import numpy as np
+import torch
+
 from src.train import run_train
 from src.evaluation import run_eval
 from src.inference import run_inference
 from utils.config import Config
+
+seed = 7874
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def main(args):
     config = Config.parse(args.model)
     config.update({
         'model': args.model,
-        'build_report': args.build_report,
+        'save_by_step': args.save_by_step,
     })
 
     if args.do_train:
@@ -31,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--do_train', type=bool, default=True, help="Whether to run training.")
     parser.add_argument('--do_eval', type=bool, default=True, help="Whether to run eval on the dev set.")
     parser.add_argument('--do_predict', type=bool, default=True, help="Whether to run predict on the test set.")
-    parser.add_argument('--build_report', type=bool, default=True, help="Whether to build report.")
+    parser.add_argument('--save_by_step', type=bool, default=True, help="Whether save by step")
     args = parser.parse_args()
 
     main(args)

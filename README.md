@@ -23,3 +23,7 @@
 5. Label Smooth
 
 ## 代码结构
+
+## Note
+1. 需要在全局设置 seed。
+2. 按 step 存模型比按 epoch 存模型精度高。

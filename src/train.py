@@ -2,7 +2,6 @@
 #-*- coding:utf-8 -*-
 
 import pickle
-import random
 from tqdm import tqdm
 
 import numpy as np
@@ -126,15 +125,6 @@ class Trainer:
         return result['loss'], result['acc']
 
 
-def init_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-        # torch.backends.cudnn.deterministic = True
-
-
 def build_embedding(config, vocab):
     embedding_matrix = np.zeros((len(vocab) + 1, config.embed_dim))
     embeddings_index = pickle.load(open(config.embedding_path, 'rb'))
@@ -146,8 +136,6 @@ def build_embedding(config, vocab):
 
 
 def run_train(config):
-
-    init_seed(config.seed)
 
     train = pd.read_csv(config.train_path)
     train, dev, _, _ = train_test_split(

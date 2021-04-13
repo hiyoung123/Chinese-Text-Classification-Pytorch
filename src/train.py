@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 import torch
-from torch.optim import AdamW, Adam
+from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer, BertConfig, BertModel
@@ -62,6 +62,8 @@ class BaseTrainer:
         pass
 
     def train_step(self, batch):
+        batch = {key: value.to(self.device) for key, value in batch.items()}
+
         self.optimizer.zero_grad()
         logits, _ = self.model(batch)
         loss = self.criterion(logits, batch['label'].view(-1))
@@ -122,7 +124,7 @@ class EpochTrainer(BaseTrainer):
 
         batch_iterator = tqdm(train, desc=desc, ncols=100)
         for i, batch in enumerate(batch_iterator):
-            batch = {key: value.to(self.device) for key, value in batch.items()}
+
             loss, predict = self.train_step(batch)
 
             total_loss += loss.item()
@@ -159,7 +161,6 @@ class StepTrainer(BaseTrainer):
 
         batch_iterator = tqdm(train, desc=desc, ncols=100)
         for i, batch in enumerate(batch_iterator):
-            batch = {key: value.to(self.device) for key, value in batch.items()}
             loss, predict = self.train_step(batch)
 
             total_loss += loss.item()
@@ -170,7 +171,7 @@ class StepTrainer(BaseTrainer):
             batch_iterator.set_postfix(postfix)
 
             self.global_step += 1
-            if (self.log_step > 0 and self.global_step % self.log_step == 0) or self.global_step == len(batch_iterator):
+            if self.log_step > 0 and self.global_step % self.log_step == 0:
                 dev_result = self.validate(dev)
                 train_acc = accuracy_score(label_list, pre_list) # log_step 个 patch 的平均
                 pre_list, label_list = [], []

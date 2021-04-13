@@ -26,6 +26,8 @@ def main(args):
     config = Config.parse(args.model)
     config.update({
         'model': args.model,
+        'log_step': args.log_step,
+        'patience': args.patience,
         'save_by_step': args.save_by_step,
     })
 
@@ -45,7 +47,9 @@ if __name__ == '__main__':
     parser.add_argument('--do_train', type=bool, default=True, help="Whether to run training.")
     parser.add_argument('--do_eval', type=bool, default=True, help="Whether to run eval on the dev set.")
     parser.add_argument('--do_predict', type=bool, default=True, help="Whether to run predict on the test set.")
-    parser.add_argument('--save_by_step', type=bool, default=True, help="Whether save by step")
+    parser.add_argument('--save_by_step', type=bool, default=False, help="Whether save by step")
+    parser.add_argument('--log_step', type=int, default=10, help="Save model and log per step")
+    parser.add_argument('--patience', type=int, default=3, help="Patience num")
     args = parser.parse_args()
 
     main(args)

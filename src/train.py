@@ -14,7 +14,7 @@ from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer, BertConfig, BertModel
-
+from tensorboardX import SummaryWriter
 
 from .models import (
     TextRNN,
@@ -54,6 +54,10 @@ class BaseTrainer:
         self.patience_counter = 0
         self.patience = config.patience
         self.best_model_file = config.model_path
+
+        base_dir = config.log_dir + '/' + config.model + '_' + config.task_name + '/'
+        self.train_writer = SummaryWriter(log_dir=base_dir + 'train')
+        self.eval_writer = SummaryWriter(log_dir=base_dir + 'eval')
 
     def train(self, train, dev, num_epochs):
         pass
@@ -112,6 +116,11 @@ class EpochTrainer(BaseTrainer):
             train_result = self.train_epoch(train, desc)
             val_result = self.validate(dev)
 
+            self.train_writer.add_scalar('Loss', train_result['loss'], epoch)
+            self.train_writer.add_scalar('Acc', train_result['acc'], epoch)
+            self.eval_writer.add_scalar('Loss', val_result['loss'], epoch)
+            self.eval_writer.add_scalar('Acc', val_result['acc'], epoch)
+
             self.check_best_score(val_result)
 
             if self.patience_counter >= self.patience:
@@ -138,7 +147,7 @@ class EpochTrainer(BaseTrainer):
             'loss': total_loss / len(train),
             'acc': accuracy_score(label_list, predict_list),
         }
-        return result['loss'], result['acc']
+        return result
 
 
 class StepTrainer(BaseTrainer):
@@ -156,7 +165,7 @@ class StepTrainer(BaseTrainer):
     def train_epoch(self, data, desc):
         self.model.train()
         train, dev = data
-        total_loss = 0
+        total_loss, pre_loss = 0, 0
         pre_list, label_list = [], []
 
         batch_iterator = tqdm(train, desc=desc, ncols=100)
@@ -172,12 +181,17 @@ class StepTrainer(BaseTrainer):
 
             self.global_step += 1
             if self.log_step > 0 and self.global_step % self.log_step == 0:
-                dev_result = self.validate(dev)
+                val_result = self.validate(dev)
                 train_acc = accuracy_score(label_list, pre_list) # log_step 个 patch 的平均
                 pre_list, label_list = [], []
 
+                self.train_writer.add_scalar('Loss', (total_loss-pre_loss)/self.log_step, self.global_step)
+                self.train_writer.add_scalar('Acc', train_acc, self.global_step)
+                self.eval_writer.add_scalar('Loss', val_result['loss'], self.global_step)
+                self.eval_writer.add_scalar('Acc', val_result['acc'], self.global_step)
+                pre_loss = total_loss
                 self.model.train()
-                self.check_best_score(dev_result)
+                self.check_best_score(val_result)
             if self.patience_counter >= self.patience / self.log_step:
                 return True
         return False

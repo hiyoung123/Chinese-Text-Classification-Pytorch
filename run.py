@@ -29,6 +29,7 @@ def main(args):
         'log_step': args.log_step,
         'patience': args.patience,
         'save_by_step': args.save_by_step,
+        'task_name': args.task_name
     })
 
     if args.do_train:
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_by_step', type=bool, default=False, help="Whether save by step")
     parser.add_argument('--log_step', type=int, default=10, help="Save model and log per step")
     parser.add_argument('--patience', type=int, default=3, help="Patience num")
+    parser.add_argument('--task_name', type=str, default='base', help='task name')
     args = parser.parse_args()
 
     main(args)

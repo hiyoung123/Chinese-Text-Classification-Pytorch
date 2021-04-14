@@ -23,6 +23,11 @@ from .models import (
     BertClassificationModel
 )
 from .datasets import EmbeddingDataset, BertDataset
+from .tricks import (
+    FocalLoss, DiceLoss, LabelSmoothingCrossEntropy,
+    FGM,
+    Lookahead,
+)
 
 
 MODEL_CLASSES = {
@@ -35,10 +40,10 @@ MODEL_CLASSES = {
 
 
 LOSS_FUNCTIONS = {
-    # 'focal_loss': FocalLoss(),
-    # 'dice_loss': DiceLoss(),
+    'focal_loss': FocalLoss(),
+    'dice_loss': DiceLoss(),
     'ce_loss': CrossEntropyLoss(),
-    # 'label_smooth': LabelSmoothingCrossEntropy()
+    'label_smooth': LabelSmoothingCrossEntropy()
 }
 
 
@@ -49,6 +54,12 @@ class BaseTrainer:
 
         self.optimizer = Adam(self.model.parameters(), lr=config.learning_rate)
         self.criterion = LOSS_FUNCTIONS[config.loss_type]
+
+        if config.adv_tpye == 'fgm':
+            self.fgm = FGM(self.model)
+
+        if config.flooding:
+            self.flooding = config.flooding
 
         self.best_score = float('-inf')
         self.patience_counter = 0
@@ -71,7 +82,20 @@ class BaseTrainer:
         self.optimizer.zero_grad()
         logits, _ = self.model(batch)
         loss = self.criterion(logits, batch['label'].view(-1))
+
+        if self.flooding:
+            flooding = torch.tensor(self.flooding).to(self.device)
+            loss = torch.abs(loss - flooding) + flooding
+
         loss.backward()
+
+        if self.fgm:
+            self.fgm.attack()
+            logits_adv, _ = self.model(batch)
+            loss_adv = self.criterion(logits_adv, batch['label'].view(-1))
+            loss_adv.backward()
+            self.fgm.restore()
+
         self.optimizer.step()
         _, predict = torch.max(logits, 1)
         return loss, predict

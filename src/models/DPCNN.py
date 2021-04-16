@@ -13,7 +13,7 @@ class DPCNN(nn.Module):
         super(DPCNN, self).__init__()
 
         self.embedding = nn.Embedding.from_pretrained(config.embedding, freeze=False)
-        self.conv_region = nn.Conv2d(1, config.num_filters, (3, config.embed), stride=1)
+        self.conv_region = nn.Conv2d(1, config.num_filters, (3, config.embed_dim), stride=1)
         self.conv = nn.Conv2d(config.num_filters, config.num_filters, (3, 1), stride=1)
         self.max_pool = nn.MaxPool2d(kernel_size=(3, 1), stride=2)
         self.padding1 = nn.ZeroPad2d((0, 0, 1, 1))  # top bottom

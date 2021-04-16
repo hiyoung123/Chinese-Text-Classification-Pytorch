@@ -17,6 +17,7 @@ from .models import (
     TextRNN,
     TextCNN,
     TextRCNN,
+    DPCNN,
     BertClassificationModel
 )
 from .datasets import EmbeddingDataset, BertDataset
@@ -28,6 +29,7 @@ MODEL_CLASSES = {
     # 'FastText': (FastText, EmbeddingDataset),
     'TextRCNN': (TextRCNN, EmbeddingDataset),
     'TextRNN': (TextRNN, EmbeddingDataset),
+    'DPCNN': (DPCNN, EmbeddingDataset),
     'BertFC': (BertClassificationModel, BertDataset),
 }
 

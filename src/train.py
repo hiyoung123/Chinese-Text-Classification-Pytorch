@@ -152,6 +152,7 @@ class BaseTrainer:
             'loss': total_loss / len(dataset),
             'acc': accuracy_score(label_list, pre_list),
             'epoch': epoch,
+            'step': 0,
         }
         return result
 

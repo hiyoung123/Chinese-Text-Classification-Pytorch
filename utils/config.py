@@ -18,6 +18,15 @@ class Dict(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
+    def __str__(self):
+        s = '\n'
+        s += '*'*100
+        s += '\n'
+        for k in self.keys():
+            s += k + ' = ' + str(self.get(k)) + '\n'
+        s += '*'*100
+        return s
+
 
 class Config:
     @classmethod

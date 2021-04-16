@@ -19,6 +19,7 @@ from .models import (
     BertClassificationModel
 )
 from .datasets import EmbeddingDataset, BertDataset
+from utils.log import Log
 
 
 MODEL_CLASSES = {
@@ -35,6 +36,7 @@ class Evaluator:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = model.to(self.device)
         self.model = torch.load(config.model_path, map_location=self.device)
+        self.logger = Log()
 
     def evaluate(self, data):
         desc = '[Evaluate]'
@@ -56,6 +58,7 @@ class Evaluator:
         result = {
             'acc': accuracy_score(label_list, pre_list),
         }
+        self.logger.info('Evaluate', 'evaluation score is %s' % result['acc'])
         return result['acc']
 
 
@@ -88,4 +91,4 @@ def run_eval(config):
     test = DataLoader(test, batch_size=config.batch_size)
     evaluator = Evaluator(config, model)
     acc = evaluator.evaluate(test)
-    print(acc)
+    # print(acc)

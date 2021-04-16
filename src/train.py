@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import pickle
+import time
 from tqdm import tqdm
 
 import numpy as np
@@ -28,6 +29,7 @@ from .tricks import (
     FGM,
     Lookahead,
 )
+from utils.log import Log
 
 
 MODEL_CLASSES = {
@@ -57,11 +59,20 @@ class BaseTrainer:
 
         if config.adv_tpye == 'fgm':
             self.fgm = FGM(self.model)
+        else:
+            self.fgm = None
 
         if config.flooding:
             self.flooding = config.flooding
+        else:
+            self.flooding = None
 
+        self.num_epochs = config.num_epochs
+        self.start_time = 0
         self.best_score = float('-inf')
+        self.best_loss = float('inf')
+        self.best_epoch = 0
+        self.best_step = 0
         self.patience_counter = 0
         self.patience = config.patience
         self.best_model_file = config.model_path
@@ -69,11 +80,14 @@ class BaseTrainer:
         base_dir = config.log_dir + '/' + config.model + '_' + config.task_name + '/'
         self.train_writer = SummaryWriter(log_dir=base_dir + 'train')
         self.eval_writer = SummaryWriter(log_dir=base_dir + 'eval')
+        self.logger = Log(config.log_dir, config.log_level)
 
-    def train(self, train, dev, num_epochs):
+        self.logger.info('Config', str(config))
+
+    def train(self, train, dev):
         pass
 
-    def train_epoch(self, data, desc):
+    def train_epoch(self, data, epoch):
         pass
 
     def train_step(self, batch):
@@ -102,14 +116,20 @@ class BaseTrainer:
 
     def check_best_score(self, result):
         score = result['acc']
+        loss = result['loss']
+        epoch = result['epoch']
+        step = result['step']
         if score <= self.best_score:
             self.patience_counter += 1
         else:
             self.best_score = score
+            self.best_loss = loss
+            self.best_epoch = epoch
+            self.best_step = step
             self.patience_counter = 0
             torch.save(self.model, self.best_model_file)
 
-    def validate(self, dataset):
+    def validate(self, dataset, epoch):
         self.model.eval()
         total_loss = 0
         pre_list = []
@@ -128,17 +148,28 @@ class BaseTrainer:
         result = {
             'loss': total_loss / len(dataset),
             'acc': accuracy_score(label_list, pre_list),
+            'epoch': epoch,
         }
         return result
+
+    def build_result(self):
+        total_time = time.process_time() - self.start_time
+        m, s = int(total_time/60), total_time%60
+        self.logger.info('Train', 'The training result is :')
+        self.logger.info('Train', 'Best Loss is %.4f' % self.best_loss)
+        self.logger.info('Train', 'Best Score is %.4f' % self.best_score)
+        self.logger.info('Train', 'Best Epoch is %s' % self.best_epoch)
+        self.logger.info('Train', 'Best Step is %s' % self.best_step)
+        self.logger.info('Train', 'The time is %s m %.2f s' % (m, s))
 
 
 class EpochTrainer(BaseTrainer):
 
-    def train(self, train, dev, num_epochs):
-        for epoch in range(num_epochs):
-            desc = '[Train Epoch: {0}/{1}]'.format(epoch + 1, num_epochs)
-            train_result = self.train_epoch(train, desc)
-            val_result = self.validate(dev)
+    def train(self, train, dev):
+        self.start_time = time.process_time()
+        for epoch in range(self.num_epochs):
+            train_result = self.train_epoch(train, epoch)
+            val_result = self.validate(dev, epoch)
 
             self.train_writer.add_scalar('Loss', train_result['loss'], epoch)
             self.train_writer.add_scalar('Acc', train_result['acc'], epoch)
@@ -149,12 +180,13 @@ class EpochTrainer(BaseTrainer):
 
             if self.patience_counter >= self.patience:
                 break
+        self.build_result()
 
-    def train_epoch(self, train, desc):
+    def train_epoch(self, train, epoch):
         self.model.train()
         total_loss = 0
         predict_list, label_list = [], []
-
+        desc = '[Train Epoch: {0}/{1}]'.format(epoch + 1, self.num_epochs)
         batch_iterator = tqdm(train, desc=desc, ncols=100)
         for i, batch in enumerate(batch_iterator):
 
@@ -170,6 +202,7 @@ class EpochTrainer(BaseTrainer):
         result = {
             'loss': total_loss / len(train),
             'acc': accuracy_score(label_list, predict_list),
+            'epoch': epoch,
         }
         return result
 
@@ -180,18 +213,18 @@ class StepTrainer(BaseTrainer):
         self.global_step = 0
         self.log_step = config.log_step
 
-    def train(self, train, dev, num_epochs):
-        for epoch in range(num_epochs):
-            desc = '[Train Epoch: {0}/{1}]'.format(epoch + 1, num_epochs)
-            if self.train_epoch((train, dev), desc):
+    def train(self, train, dev):
+        for epoch in range(self.num_epochs):
+            if self.train_epoch((train, dev), epoch):
                 break
+        self.build_result()
 
-    def train_epoch(self, data, desc):
+    def train_epoch(self, data, epoch):
         self.model.train()
         train, dev = data
         total_loss, pre_loss = 0, 0
         pre_list, label_list = [], []
-
+        desc = '[Train Epoch: {0}/{1}]'.format(epoch + 1, self.num_epochs)
         batch_iterator = tqdm(train, desc=desc, ncols=100)
         for i, batch in enumerate(batch_iterator):
             loss, predict = self.train_step(batch)
@@ -205,7 +238,8 @@ class StepTrainer(BaseTrainer):
 
             self.global_step += 1
             if self.log_step > 0 and self.global_step % self.log_step == 0:
-                val_result = self.validate(dev)
+                val_result = self.validate(dev, epoch)
+                val_result['step'] = self.global_step
                 train_acc = accuracy_score(label_list, pre_list) # log_step 个 patch 的平均
                 pre_list, label_list = [], []
 
@@ -263,4 +297,4 @@ def run_train(config):
         trainer = StepTrainer(config, model)
     else:
         trainer = EpochTrainer(config, model)
-    trainer.train(train, dev, num_epochs=config.num_epochs)
+    trainer.train(train, dev)

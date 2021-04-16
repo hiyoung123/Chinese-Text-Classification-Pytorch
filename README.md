@@ -21,6 +21,11 @@
 3. Focal Loss
 4. Dice Loss
 5. Label Smooth
+6. scheduler
+7. max_gradient_norm
+8. fp16
+9. lookahead
+10. MSD
 
 ## 代码结构
 

@@ -4,4 +4,5 @@
 from .TextRNN import TextRNN
 from .TextCNN import TextCNN
 from .TextRCNN import TextRCNN
+from .DPCNN import DPCNN
 from .BertFC import BertClassificationModel

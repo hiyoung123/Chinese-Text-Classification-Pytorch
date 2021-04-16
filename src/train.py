@@ -22,6 +22,7 @@ from .models import (
     TextRNN,
     TextCNN,
     TextRCNN,
+    DPCNN,
     BertClassificationModel
 )
 from .datasets import EmbeddingDataset, BertDataset
@@ -32,21 +33,13 @@ from .tricks import (
 )
 from utils.log import Log
 
-seed = 7874
-random.seed(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
-if torch.cuda.is_available():
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
 
 MODEL_CLASSES = {
     'TextCNN': (TextCNN, EmbeddingDataset),
     # 'FastText': (FastText, EmbeddingDataset),
     'TextRCNN': (TextRCNN, EmbeddingDataset),
     'TextRNN': (TextRNN, EmbeddingDataset),
+    'DPCNN': (DPCNN, EmbeddingDataset),
     'BertFC': (BertClassificationModel, BertDataset),
 }
 

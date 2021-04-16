@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import pickle
+import random
 import time
 from tqdm import tqdm
 
@@ -30,6 +31,15 @@ from .tricks import (
     Lookahead,
 )
 from utils.log import Log
+
+seed = 7874
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 MODEL_CLASSES = {
@@ -80,7 +90,7 @@ class BaseTrainer:
         base_dir = config.log_dir + '/' + config.model + '_' + config.task_name + '/'
         self.train_writer = SummaryWriter(log_dir=base_dir + 'train')
         self.eval_writer = SummaryWriter(log_dir=base_dir + 'eval')
-        self.logger = Log(config.log_dir, config.log_level)
+        self.logger = Log(config.log_dir + config.task_name, config.log_level)
 
         self.logger.info('Config', str(config))
 

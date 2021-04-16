@@ -11,7 +11,6 @@ from src.train import run_train
 from src.evaluation import run_eval
 from src.inference import run_inference
 from utils.config import Config
-from utils.log import Log
 
 
 seed = 7874

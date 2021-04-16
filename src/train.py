@@ -83,7 +83,7 @@ class BaseTrainer:
         base_dir = config.log_dir + '/' + config.model + '_' + config.task_name + '/'
         self.train_writer = SummaryWriter(log_dir=base_dir + 'train')
         self.eval_writer = SummaryWriter(log_dir=base_dir + 'eval')
-        self.logger = Log(config.log_dir + config.task_name, config.log_level)
+        self.logger = Log(base_dir, config.log_level)
 
         self.logger.info('Config', str(config))
 

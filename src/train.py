@@ -234,12 +234,14 @@ def build_embedding(config, vocab):
 def run_train(config):
 
     train = pd.read_csv(config.train_path)
-    train, dev, _, _ = train_test_split(
-        train, train['label'],
-        test_size=config.split_size,
-        stratify=train['label'],
-        random_state=config.seed
-    )
+    dev = pd.read_csv(config.dev_path)
+
+    # train, dev, _, _ = train_test_split(
+    #     train, train['label'],
+    #     test_size=config.split_size,
+    #     stratify=train['label'],
+    #     random_state=config.seed
+    # )
 
     model, dataset = MODEL_CLASSES[config.model]
     if config.get('embedding_path', False):

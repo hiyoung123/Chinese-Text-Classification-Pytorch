@@ -23,7 +23,7 @@ class BertRCNN(nn.Module):
                             token_type_ids=inputs['token_type_ids'])
         out = outputs[0]
         out, _ = self.lstm(out)
-        out = torch.cat((outputs[1], out), 2)
+        out = torch.cat((outputs[0], out), 2)
         out = F.relu(out)
         out = out.permute(0, 2, 1)
         out = self.maxpool(out).squeeze()

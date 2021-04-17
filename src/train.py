@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 import torch
+import torch.nn as nn
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
@@ -23,7 +24,11 @@ from .models import (
     TextCNN,
     TextRCNN,
     DPCNN,
-    BertClassificationModel
+    FastText,
+    BertFCModel,
+    BertRNN,
+    BertCNN,
+    BertRCNN
 )
 from .datasets import EmbeddingDataset, BertDataset
 from .tricks import (
@@ -36,11 +41,14 @@ from utils.log import Log
 
 MODEL_CLASSES = {
     'TextCNN': (TextCNN, EmbeddingDataset),
-    # 'FastText': (FastText, EmbeddingDataset),
+    'FastText': (FastText, EmbeddingDataset),
     'TextRCNN': (TextRCNN, EmbeddingDataset),
     'TextRNN': (TextRNN, EmbeddingDataset),
     'DPCNN': (DPCNN, EmbeddingDataset),
-    'BertFC': (BertClassificationModel, BertDataset),
+    'BertFC': (BertFCModel, BertDataset),
+    'BertCNN': (BertCNN, BertDataset),
+    'BertRNN': (BertRNN, BertDataset),
+    'BertRCNN': (BertRCNN, BertDataset),
 }
 
 
@@ -69,6 +77,9 @@ class BaseTrainer:
             self.flooding = config.flooding
         else:
             self.flooding = None
+
+        if config.init_weight:
+            self.init_network()
 
         self.num_epochs = config.num_epochs
         self.start_time = 0
@@ -155,6 +166,21 @@ class BaseTrainer:
             'step': 0,
         }
         return result
+
+    def init_network(self, method='xavier', exclude='embedding'):
+        for name, w in self.model.named_parameters():
+            if exclude not in name:
+                if 'weight' in name:
+                    if method == 'xavier':
+                        nn.init.xavier_normal_(w)
+                    elif method == 'kaiming':
+                        nn.init.kaiming_normal_(w)
+                    else:
+                        nn.init.normal_(w)
+                elif 'bias' in name:
+                    nn.init.constant_(w, 0)
+                else:
+                    pass
 
     def build_result(self):
         total_time = time.process_time() - self.start_time
@@ -259,6 +285,17 @@ class StepTrainer(BaseTrainer):
         return False
 
 
+def set_seed(seed):
+    # seed = 7874
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+
 def build_embedding(config, vocab):
     embedding_matrix = np.zeros((len(vocab) + 1, config.embed_dim))
     embeddings_index = pickle.load(open(config.embedding_path, 'rb'))
@@ -280,6 +317,8 @@ def run_train(config):
     #     stratify=train['label'],
     #     random_state=config.seed
     # )
+
+    set_seed(config.seed)
 
     model, dataset = MODEL_CLASSES[config.model]
     if config.get('embedding_path', False):

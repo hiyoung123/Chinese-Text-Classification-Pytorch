@@ -18,7 +18,11 @@ from .models import (
     TextCNN,
     TextRCNN,
     DPCNN,
-    BertClassificationModel
+    FastText,
+    BertFCModel,
+    BertRNN,
+    BertCNN,
+    BertRCNN
 )
 from .datasets import EmbeddingDataset, BertDataset
 from utils.log import Log
@@ -26,11 +30,14 @@ from utils.log import Log
 
 MODEL_CLASSES = {
     'TextCNN': (TextCNN, EmbeddingDataset),
-    # 'FastText': (FastText, EmbeddingDataset),
+    'FastText': (FastText, EmbeddingDataset),
     'TextRCNN': (TextRCNN, EmbeddingDataset),
     'TextRNN': (TextRNN, EmbeddingDataset),
     'DPCNN': (DPCNN, EmbeddingDataset),
-    'BertFC': (BertClassificationModel, BertDataset),
+    'BertFC': (BertFCModel, BertDataset),
+    'BertCNN': (BertCNN, BertDataset),
+    'BertRNN': (BertRNN, BertDataset),
+    'BertRCNN': (BertRCNN, BertDataset),
 }
 
 
@@ -65,6 +72,17 @@ class Evaluator:
         return result['acc']
 
 
+def set_seed(seed):
+    # seed = 7874
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+
 def build_embedding(config, vocab):
     embedding_matrix = np.zeros((len(vocab) + 1, config.embed_dim))
     embeddings_index = pickle.load(open(config.embedding_path, 'rb'))
@@ -78,6 +96,8 @@ def build_embedding(config, vocab):
 def run_eval(config):
 
     test = pd.read_csv(config.test_path)
+
+    set_seed(config.seed)
 
     model, dataset = MODEL_CLASSES[config.model]
     if config.get('embedding_path', False):

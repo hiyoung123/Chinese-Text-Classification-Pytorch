@@ -4,9 +4,9 @@
 import torch.nn as nn
 
 
-class BertClassificationModel(nn.Module):
+class BertFCModel(nn.Module):
     def __init__(self, config, bert):
-        super(BertClassificationModel, self).__init__()
+        super(BertFCModel, self).__init__()
         self.bert = bert
         self.dropout = nn.Dropout(self.bert.config.hidden_dropout_prob)
         self.classifier = nn.Linear(self.bert.config.hidden_size, config.num_labels)

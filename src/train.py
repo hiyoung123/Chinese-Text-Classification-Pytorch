@@ -68,6 +68,17 @@ class BaseTrainer:
         self.optimizer = Adam(self.model.parameters(), lr=config.learning_rate)
         self.criterion = LOSS_FUNCTIONS[config.loss_type]
 
+        if config.lookahead:
+            self.optimizer = Lookahead(optimizer=self.optimizer, k=5, alpha=0.5)
+
+        if config.fp16:
+            self.fp16 = True
+            try:
+                from apex import amp
+            except ImportError:
+                raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+            self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=config.fp16_opt_level)
+
         if config.adv_tpye == 'fgm':
             self.fgm = FGM(self.model)
         else:
@@ -77,6 +88,11 @@ class BaseTrainer:
             self.flooding = config.flooding
         else:
             self.flooding = None
+
+        if config.max_gradient_norm:
+            self.max_gradient_norm = config.max_gradient_norm
+        else:
+            self.max_gradient_norm = None
 
         if config.init_weight:
             self.init_network()
@@ -115,7 +131,17 @@ class BaseTrainer:
             flooding = torch.tensor(self.flooding).to(self.device)
             loss = torch.abs(loss - flooding) + flooding
 
-        loss.backward()
+        if self.fp16:
+            with amp.scale_loss(loss, self.optimizer) as scaled_loss:
+                scaled_loss.backward()
+        else:
+            loss.backward()
+
+        if self.max_gradient_norm:
+            if self.fp16:
+                torch.nn.utils.clip_grad_norm_(amp.master_params(self.optimizer), self.max_gradient_norm)
+            else:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_gradient_norm)
 
         if self.fgm:
             self.fgm.attack()

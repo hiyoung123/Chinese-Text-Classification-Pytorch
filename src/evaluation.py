@@ -11,33 +11,39 @@ from sklearn.metrics import accuracy_score
 
 import torch
 from torch.utils.data import DataLoader
-from transformers import BertTokenizer, BertConfig, BertModel
+from transformers import (
+    BertTokenizer, BertConfig, BertModel,
+    # XLNetTokenizer, XLNetConfig, XLNetModel,
+    # AlbertTokenizer, AlbertConfig, AlbertModel,
+)
 
 from .models import (
-    TextRNN,
-    TextCNN,
-    TextRCNN,
-    DPCNN,
-    FastText,
-    BertFCModel,
-    BertRNN,
-    BertCNN,
-    BertRCNN
+    TextRNN, TextCNN, TextRCNN, DPCNN, FastText,
+    BertFCModel, BertRNN, BertCNN, BertRCNN
 )
+
 from .datasets import EmbeddingDataset, BertDataset
 from utils.log import Log
 
 
 MODEL_CLASSES = {
-    'TextCNN': (TextCNN, EmbeddingDataset),
-    'FastText': (FastText, EmbeddingDataset),
-    'TextRCNN': (TextRCNN, EmbeddingDataset),
-    'TextRNN': (TextRNN, EmbeddingDataset),
-    'DPCNN': (DPCNN, EmbeddingDataset),
-    'BertFC': (BertFCModel, BertDataset),
-    'BertCNN': (BertCNN, BertDataset),
-    'BertRNN': (BertRNN, BertDataset),
-    'BertRCNN': (BertRCNN, BertDataset),
+    'TextCNN': (None, None, None, TextCNN, EmbeddingDataset),
+    'FastText': (None, None, None, FastText, EmbeddingDataset),
+    'TextRCNN': (None, None, None, TextRCNN, EmbeddingDataset),
+    'TextRNN': (None, None, None, TextRNN, EmbeddingDataset),
+    'DPCNN': (None, None, None, DPCNN, EmbeddingDataset),
+    'BertFC': (BertTokenizer, BertConfig, BertModel, BertFCModel, BertDataset),
+    'BertCNN': (BertTokenizer, BertConfig, BertModel,BertCNN, BertDataset),
+    'BertRNN': (BertTokenizer, BertConfig, BertModel,BertRNN, BertDataset),
+    'BertRCNN': (BertTokenizer, BertConfig, BertModel,BertRCNN, BertDataset),
+    # 'XLNetFC': (XLNetTokenizer, XLNetConfig, XLNetModel, BertFCModel, BertDataset),
+    # 'XLNetCNN': (XLNetTokenizer, XLNetConfig, XLNetModel, BertCNN, BertDataset),
+    # 'XLNetRNN': (XLNetTokenizer, XLNetConfig, XLNetModel, BertRNN, BertDataset),
+    # 'XLNetRCNN': (XLNetTokenizer, XLNetConfig, XLNetModel, BertRCNN, BertDataset),
+    # 'ALBertFC': (AlbertTokenizer, AlbertConfig, AlbertModel, BertFCModel, BertDataset),
+    # 'ALBertCNN': (AlbertTokenizer, AlbertConfig, AlbertModel, BertCNN, BertDataset),
+    # 'ALBertRNN': (AlbertTokenizer, AlbertConfig, AlbertModel, BertRNN, BertDataset),
+    # 'ALBertRCNN': (AlbertTokenizer, AlbertConfig, AlbertModel, BertRCNN, BertDataset),
 }
 
 
@@ -99,15 +105,15 @@ def run_eval(config):
 
     set_seed(config.seed)
 
-    model, dataset = MODEL_CLASSES[config.model]
+    bert_tokenizer, bert_config, bert_model, model, dataset = MODEL_CLASSES[config.model]
     if config.get('embedding_path', False):
         tokenizer = pickle.load(open(config.vocab_path, 'rb'))
         config['embedding'] = build_embedding(config, tokenizer)
         model = model(config)
     else:
-        tokenizer = BertTokenizer.from_pretrained(config.pre_trained_model + '/vocab.txt')
-        bert_config = BertConfig.from_pretrained(config.pre_trained_model + '/bert_config.json')
-        bert = BertModel.from_pretrained(config.pre_trained_model + '/pytorch_model.bin', config=bert_config)
+        tokenizer = bert_tokenizer.from_pretrained(config.pre_trained_model + '/vocab.txt')
+        bert_config = bert_config.from_pretrained(config.pre_trained_model + '/bert_config.json')
+        bert = bert_model.from_pretrained(config.pre_trained_model + '/pytorch_model.bin', config=bert_config)
         model = model(bert=bert, config=config)
 
     test = dataset(test, tokenizer, config.max_seq_len, True)

@@ -39,6 +39,8 @@ if __name__ == '__main__':
     parser.add_argument('--flooding', type=float, default=0.0, help="flooding, default=0.0")
     parser.add_argument('--max_gradient_norm', type=float, default=0.0, help="max_gradient_norm, default=0.0")
 
+    parser.add_argument('--pre_trained_model', type=str, default='pretrain/chinese_wwm_ext_pytorch', help="pre_trained")
+
     parser.add_argument('--save_by_step', type=bool, default=False, help="Whether save by step.")
     parser.add_argument('--log_step', type=int, default=10, help="Save model and log per step.")
     parser.add_argument('--log_dir', type=str, default='log/', help="log_dir, default=log/")

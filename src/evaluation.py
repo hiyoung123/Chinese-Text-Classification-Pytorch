@@ -73,10 +73,10 @@ class Evaluator:
                 prob_list += prob.cpu().numpy().tolist()
         result = {
             'acc': accuracy_score(label_list, pre_list),
-            'f1': f1_score(label_list, pre_list)
+            'f1': f1_score(label_list, pre_list, average='macro')
         }
-        self.logger.info('Evaluate', 'evaluation score is %s' % result['acc'])
-        self.logger.info('Evaluate', 'evaluation f1 is %s' % result['f1'])
+        self.logger.info('Evaluate', 'evaluation score is %.4f' % result['acc'])
+        self.logger.info('Evaluate', 'evaluation f1 is %.4f' % result['f1'])
         return result
 
 

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 import torch
 from torch.utils.data import DataLoader
@@ -73,9 +73,11 @@ class Evaluator:
                 prob_list += prob.cpu().numpy().tolist()
         result = {
             'acc': accuracy_score(label_list, pre_list),
+            'f1': f1_score(label_list, pre_list)
         }
         self.logger.info('Evaluate', 'evaluation score is %s' % result['acc'])
-        return result['acc']
+        self.logger.info('Evaluate', 'evaluation f1 is %s' % result['f1'])
+        return result
 
 
 def set_seed(seed):
@@ -119,5 +121,5 @@ def run_eval(config):
     test = dataset(test, tokenizer, config.max_seq_len, True)
     test = DataLoader(test, batch_size=config.batch_size)
     evaluator = Evaluator(config, model)
-    acc = evaluator.evaluate(test)
+    result = evaluator.evaluate(test)
     # print(acc)

@@ -6,9 +6,6 @@ try:
 except:
     import ConfigParser as ConfigParser
 
-conf = ConfigParser.ConfigParser()
-conf.read('config/base.cfg')
-
 
 class Dict(dict):
 
@@ -29,15 +26,14 @@ class Dict(dict):
 
 
 class Config:
+
     @classmethod
-    def parse(cls, section):
+    def parse(cls, file):
+        f = ConfigParser.ConfigParser()
+        f.read('config/%s.cfg' % file)
         config = {}
-        for k, v in conf.items(section):
+        for k, v in f.items('config'):
             config[k] = cls.parse_value(v)
-        for k, v in conf.items('base'):
-            config.update(
-                {k: cls.parse_value(v)}
-            )
         return Dict(config)
 
     @classmethod
@@ -63,4 +59,4 @@ class Config:
 
 
 if __name__ == '__main__':
-    print(Config.parse('TextCNN'))
+    print(Config.parse('BertRCNN'))

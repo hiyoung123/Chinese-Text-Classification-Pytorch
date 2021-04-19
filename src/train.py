@@ -78,8 +78,10 @@ class BaseTrainer:
             except ImportError:
                 raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
             self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=config.fp16_opt_level)
+        else:
+            self.fp16 = False
 
-        if config.adv_tpye == 'fgm':
+        if config.adv_type == 'fgm':
             self.fgm = FGM(self.model)
         else:
             self.fgm = None

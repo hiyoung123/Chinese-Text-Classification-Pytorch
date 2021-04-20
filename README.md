@@ -63,7 +63,7 @@
 ## Pre Trained
 
 1. Pre Trained Embedding
-Embedding 词向量使用的是 [sogou](链接: https://pan.baidu.com/s/1EOcbzlD4BNGHnX2MEc0CNA 提取码: zvsg 复制这段内容后打开百度网盘手机App，操作更方便哦).
+Embedding 词向量使用的是 [sogou](https://pan.baidu.com/s/1EOcbzlD4BNGHnX2MEc0CNA).
 2. Pre Trained Model
   * chinese_wwm_ext_pytorch
   * chinese_roberta_wwm_ext_pytorch
@@ -83,6 +83,21 @@ python run.py --model BertRCNN --save_by_step True --patience 1000
 ```
   
 ## Result
+
+base 是基本的配置，使用按 step 计算 val_score。各个模型没有调参，使用的是 config 中的配置文件，所以不一定是最优效果。
+简单对比一下各个 trick 对模型的影响，以及各个模型在 acc/f1 上的效果。
+可以看出，还是使用预训练模型效果提升最明显。
+
+| ACC/F1  | base | focal loss | label smooth | lookahead |
+| ------  | ---  |     ---    |     ---      |    ---    |
+| TextCNN | 0.9274/0.9273 |0.9252/0.9252 |0.9264/0.9264 |0.9301/0.9301 |
+| TextRNN | 0.9238/0.9237 |0.9248/0.9250 |0.9210/0.9210 |0.9186/0.9185 |
+| TextRCNN | 0.9284/0.9285 |0.9253/0.9254 |0.9284/0.9282 |0.9263/0.9261 |
+| DPCNN | 0.9221/0.9219 |0.9233/0.9234 |0.9252/0.9252 |0.9220/0.9218 |
+| BertFC | 0.9453/0.9454 |0.9454/0.9453 |0.9492/0.9492 |0.9493/0.9493 |
+| BertCNN | 0.9479/0.9479 |0.9419/0.9418 |0.9489/0.9489 |0.9479/0.9479 |
+| BertRNN | 0.9482/0.9482 |0.9462/0.9462 |0.9453/0.9454 |0.9486/0.9486 |
+| BertRCNN | 0.9476/0.9475 |0.9476/0.9475 |0.9484/0.9483 |0.9476/0.9476 |
 
 
 ## Note

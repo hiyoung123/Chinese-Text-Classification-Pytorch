@@ -22,13 +22,13 @@ from .models import (
     BertFCModel, BertRNN, BertCNN, BertRCNN
 )
 
-from .datasets import EmbeddingDataset, BertDataset
+from .datasets import EmbeddingDataset, BertDataset, FastTextDataset
 from utils.log import Log
 
 
 MODEL_CLASSES = {
     'TextCNN': (None, None, None, TextCNN, EmbeddingDataset),
-    'FastText': (None, None, None, FastText, EmbeddingDataset),
+    'FastText': (None, None, None, FastText, FastTextDataset),
     'TextRCNN': (None, None, None, TextRCNN, EmbeddingDataset),
     'TextRNN': (None, None, None, TextRNN, EmbeddingDataset),
     'DPCNN': (None, None, None, DPCNN, EmbeddingDataset),

@@ -13,8 +13,8 @@ class FastText(nn.Module):
     def __init__(self, config):
         super(FastText, self).__init__()
         self.embedding = nn.Embedding.from_pretrained(config.embedding, freeze=False)
-        self.embedding_ngram2 = nn.Embedding(config.num_bigram, config.embed_dim)
-        self.embedding_ngram3 = nn.Embedding(config.num_trigram, config.embed_dim)
+        self.embedding_ngram2 = nn.Embedding(config.ngram_size, config.embed_dim)
+        self.embedding_ngram3 = nn.Embedding(config.ngram_size, config.embed_dim)
         self.dropout = nn.Dropout(config.dropout)
         self.fc1 = nn.Linear(config.embed_dim * 3, config.hidden_size)
         self.fc2 = nn.Linear(config.hidden_size, config.num_labels)

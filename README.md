@@ -33,6 +33,20 @@
 | 验证集 | 1万 |
 | 测试集 | 1万 |	
 
+自定义数据集，需要将数据集分为 train.txt, dev.txt, test.txt 三个文件，每个文件中，一条数据为一行，文本和标签使用 \t 分割开。
+使用类似如下命令进行数据处理。
+```bash
+python src\process.py --data_dir data/THUCNews --out_dir data/THUCNews/processed --max_vocab_size 2000000 --min_freq 0 --vocab_path data/THUCNews/vocab.pkl --vector_path data/THUCNews/sgns.sogou.word/sgns.sogou.word --embedding_path data/THUCNews/embedding.pkl
+```
+参数说明：
+* --data_dir： 源数据存储文件夹，文件夹下需要有 train.txt, dev.txt, test.txt 三个文件。
+* --out_dir： 输出文件夹，处理后的数据存储位置。
+* --max_vocab_size： 词汇表最大容量。
+* --min_freq： 最小词频。
+* --vocab_path： 词汇表存储路径。
+* --vector_path： 预训练词向量路径。
+* --embedding_path： 对齐后的词向量矩阵存储路径。
+
 ## Model
 
 1. TextRNN
@@ -71,16 +85,16 @@ Embedding 词向量使用的是 [sogou](https://pan.baidu.com/s/1EOcbzlD4BNGHnX2
 ## Run Code
 
 ```bash
-python run.py --model TextCNN --save_by_step True --patience 1000
-python run.py --model TextRNN --save_by_step True --patience 1000
-python run.py --model TextRCNN --save_by_step True --patience 1000
-python run.py --model DPCNN --save_by_step True --patience 1000
+# 使用 TextCNN 模型 训练并做验证 按照 epoch 计算 val score
+python run.py --model TextCNN
 
-python run.py --model BertFC --save_by_step True --patience 1000
-python run.py --model BertCNN --save_by_step True --patience 1000
-python run.py --model BertRNN --save_by_step True --patience 1000
-python run.py --model BertRCNN --save_by_step True --patience 1000
+# 使用 TextRNN 模型 训练并做验证 按照 step 计算 val score， 早停 限制 1000 步
+python run.py --model TextRNN --save_by_step True --patience 1000
+
+# 使用 BertFC 模型 训练并做验证 按照 step 计算 val score，使用 label_smooth, 并指定任务名为 label_smooth.
+python run.py --model BertFC --save_by_step True --patience 1000 --loss_type label_smooth --task_name label_smooth
 ```
+训练参数过多，可以使用 --help 进行查询使用。
   
 ## Result
 

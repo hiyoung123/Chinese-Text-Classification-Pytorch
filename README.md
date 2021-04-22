@@ -36,7 +36,14 @@
 自定义数据集，需要将数据集分为 train.txt, dev.txt, test.txt 三个文件，每个文件中，一条数据为一行，文本和标签使用 \t 分割开。
 使用类似如下命令进行数据处理。
 ```bash
-python src\process.py --data_dir data/THUCNews --out_dir data/THUCNews/processed --max_vocab_size 2000000 --min_freq 0 --vocab_path data/THUCNews/vocab.pkl --vector_path data/THUCNews/sgns.sogou.word/sgns.sogou.word --embedding_path data/THUCNews/embedding.pkl
+python src\process.py \
+    --data_dir data/THUCNews \
+    --out_dir data/THUCNews/processed \
+    --max_vocab_size 2000000 \
+    --min_freq 0 \
+    --vocab_path data/THUCNews/vocab.pkl \
+    --vector_path data/THUCNews/sgns.sogou.word/sgns.sogou.word \
+    --embedding_path data/THUCNews/embedding.pkl
 ```
 参数说明：
 * --data_dir： 源数据存储文件夹，文件夹下需要有 train.txt, dev.txt, test.txt 三个文件。

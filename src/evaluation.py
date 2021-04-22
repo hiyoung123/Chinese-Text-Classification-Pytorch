@@ -103,7 +103,7 @@ def build_embedding(config, vocab):
 
 def run_eval(config):
 
-    test = pd.read_csv(config.test_path)
+    dev = pd.read_csv(config.dev_path)
 
     set_seed(config.seed)
 
@@ -118,8 +118,8 @@ def run_eval(config):
         bert = bert_model.from_pretrained(config.pre_trained_model + '/pytorch_model.bin', config=bert_config)
         model = model(bert=bert, config=config)
 
-    test = dataset(test, tokenizer, config.max_seq_len, True)
-    test = DataLoader(test, batch_size=config.batch_size)
+    dev = dataset(dev, tokenizer, config.max_seq_len, True)
+    dev = DataLoader(dev, batch_size=config.batch_size)
     evaluator = Evaluator(config, model)
-    result = evaluator.evaluate(test)
+    result = evaluator.evaluate(dev)
     # print(acc)

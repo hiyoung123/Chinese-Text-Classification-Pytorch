@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 UNK, PAD = '<UNK>', '<PAD>'
 tokenizer = jieba.cut
@@ -31,8 +32,6 @@ def build_vocab(dataset, max_size, min_freq):
 
 def load_dataset(path):
     contents = []
-    word_max_len = 0
-    char_max_len = 0
     with open(path, 'r', encoding='UTF-8') as f:
         for line in tqdm(f):
             lin = line.strip()
@@ -41,13 +40,11 @@ def load_dataset(path):
             lin = lin.split('\t')
             token = tokenizer(lin[0])
             token = [x for x in token if len(x) != 0 and x != ' ']
-            char_max_len = max(char_max_len, len(lin[0]))
-            word_max_len = max(word_max_len, len(token))
             if len(lin) != 2:
-                contents.append([' '.join(token), -1])
+                contents.append([' '.join(token), -1000])
             else:
                 contents.append([' '.join(token), int(lin[1])])
-    return contents, word_max_len, char_max_len
+    return contents
 
 
 def embedding_map(embedding):
@@ -62,15 +59,46 @@ def embedding_map(embedding):
     return result
 
 
+def show_plt(data, config):
+    print('Word len describe:')
+    data['text_len'] = data['text'].apply(lambda x: len(x.split()))
+    print(data['text_len'].describe())
+    plt.hist(data['text_len'], bins=200)
+    plt.xlabel('sentence-length')
+    plt.ylabel('category-number')
+    plt.title('Word len describe')
+    plt.savefig(config.out_dir + '/word.jpg')
+    plt.show()
+
+    print('Char len describe:')
+    data['text_len'] = data['text'].apply(lambda x: len(''.join(x.split())))
+    print(data['text_len'].describe())
+    plt.hist(data['text_len'], bins=200)
+    plt.xlabel('sentence-length')
+    plt.ylabel('category-number')
+    plt.title('Char len describe')
+    plt.savefig(config.out_dir + '/char.jpg')
+    plt.show()
+
+    print('Label describe')
+    data['label'].value_counts().plot(kind='bar')
+    plt.title('News class count')
+    plt.xlabel("category")
+    plt.title('Label describe, Note: -1000 is test dataset label, it is invalid !')
+    plt.text(0.5, 0, 'category')
+    plt.savefig(config.out_dir + '/label.jpg')
+    plt.show()
+
+
 def main(config):
 
     if not os.path.exists(config.out_dir):
         os.mkdir(config.out_dir)
         print('%s not exists, create it !' % config.out_dir)
 
-    train, train_word_len, train_char_len = load_dataset(config.data_dir + '/train.txt')
-    dev, dev_word_len, dev_char_len = load_dataset(config.data_dir + '/dev.txt')
-    test, test_word_len, test_char_len = load_dataset(config.data_dir + '/test.txt')
+    train = load_dataset(config.data_dir + '/train.txt')
+    dev = load_dataset(config.data_dir + '/dev.txt')
+    test = load_dataset(config.data_dir + '/test.txt')
 
     columns = ['text', 'label']
     train_df = pd.DataFrame(columns=columns, data=train)
@@ -82,9 +110,10 @@ def main(config):
     test_df = pd.DataFrame(columns=columns, data=test)
     test_df.to_csv(config.out_dir + '/test.csv', index=False)
 
-    word_max_len = max(train_word_len, dev_word_len, test_word_len)
-    char_max_len = max(train_char_len, dev_char_len, test_char_len)
-    print("Word max seq len is %s, char max seq len is %s" % (word_max_len , char_max_len))
+    data = train_df.append(dev_df)
+    data = data.append(test_df)
+
+    show_plt(data, config)
 
     vocab = build_vocab(
         train + dev + test,
@@ -95,6 +124,7 @@ def main(config):
 
     print("Vocab size: %s" % len(vocab))
 
+    print('Process embedding map.')
     embedding = embedding_map(config.vector_path)
     pkl.dump(embedding, open(config.embedding_path, 'wb'))
 

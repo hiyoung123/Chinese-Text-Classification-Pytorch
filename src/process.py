@@ -17,8 +17,8 @@ tokenizer = jieba.cut
 
 def build_vocab(dataset, max_size, min_freq):
     vocab_dic = {}
-    for line in tqdm(dataset):
-        content = line[0].strip()
+    for i, content in enumerate(dataset['text']):
+        content = content.strip()
         if not content:
             continue
 
@@ -116,7 +116,7 @@ def main(config):
     show_plt(data, config)
 
     vocab = build_vocab(
-        train + dev + test,
+        dataset=data,
         max_size=config.max_vocab_size,
         min_freq=config.min_freq
     )

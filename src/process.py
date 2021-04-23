@@ -25,8 +25,8 @@ def build_vocab(dataset, max_size, min_freq):
         for word in content.split():
             vocab_dic[word] = vocab_dic.get(word, 0) + 1
     vocab_list = sorted([_ for _ in vocab_dic.items() if _[1] >= min_freq], key=lambda x: x[1], reverse=True)[:max_size]
-    vocab_dic = {word_count[0]: idx for idx, word_count in enumerate(vocab_list)}
-    vocab_dic.update({UNK: len(vocab_dic), PAD: len(vocab_dic) + 1})
+    vocab_dic = {word_count[0]: idx+2 for idx, word_count in enumerate(vocab_list)}
+    vocab_dic.update({UNK: 1, PAD: 0})
     return vocab_dic
 
 

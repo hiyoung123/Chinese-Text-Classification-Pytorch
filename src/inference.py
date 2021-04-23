@@ -54,7 +54,7 @@ class Reasoner:
         self.logger = Log()
 
     def inference(self, data):
-        desc = '[Evaluate]'
+        desc = '[Inference]'
         batch_iterator = tqdm(data, desc=desc, ncols=100)
         pre_list = []
         with torch.no_grad():

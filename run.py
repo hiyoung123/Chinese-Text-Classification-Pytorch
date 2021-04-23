@@ -20,7 +20,7 @@ def main(args):
         os.mkdir(model_path)
 
     result_path = os.path.join(config.result_path, config.model + '_' + config.task_name)
-    if not os.path.exists(model_path):
+    if not os.path.exists(result_path):
         os.mkdir(result_path)
 
     config.model_path = model_path + '/best_model.pt'
